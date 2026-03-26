@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Airspace Map – Prelude</title>
+    <style>
+        html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+        #map { width: 100vw; height: 100dvh; }
+
+        #controls {
+            position: absolute;
+            top: max(12px, env(safe-area-inset-top));
+            right: 12px;
+            background: #1A2140;
+            border-radius: 12px;
+            padding: 12px 14px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+            z-index: 10;
+            min-width: 200px;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        #controls h3 {
+            color: rgba(255,255,255,0.6);
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin: 0 0 10px;
+        }
+
+        .layer-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .layer-row:last-child { margin-bottom: 0; }
+
+        .layer-row input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.4);
+            border-radius: 4px;
+            flex-shrink: 0;
+            cursor: pointer;
+            position: relative;
+            transition: background 0.15s, border-color 0.15s;
+        }
+
+        .layer-row input[type="checkbox"]:checked {
+            background: #3F8C66;
+            border-color: #3F8C66;
+        }
+
+        .layer-row input[type="checkbox"]:checked::after {
+            content: '';
+            position: absolute;
+            left: 3px;
+            top: 0px;
+            width: 5px;
+            height: 9px;
+            border: 2px solid white;
+            border-top: none;
+            border-left: none;
+            transform: rotate(45deg);
+        }
+
+        .layer-row label {
+            color: white;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            line-height: 1.3;
+        }
+
+        #venue-label {
+            position: absolute;
+            bottom: max(20px, env(safe-area-inset-bottom));
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1A2140;
+            color: white;
+            font-family: system-ui, -apple-system, sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 20px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+            z-index: 10;
+            white-space: nowrap;
+            max-width: calc(100vw - 40px);
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <div id="controls">
+        <h3>Airspace Layers</h3>
+        <div class="layer-row">
+            <input type="checkbox" id="l1" checked>
+            <label for="l1">Aerodromes &amp; Airports</label>
+        </div>
+        <div class="layer-row">
+            <input type="checkbox" id="l2" checked>
+            <label for="l2">Danger Areas &amp; HIRTAs</label>
+        </div>
+        <div class="layer-row">
+            <input type="checkbox" id="l3" checked>
+            <label for="l3">Restricted Areas</label>
+        </div>
+        <div class="layer-row">
+            <input type="checkbox" id="l4" checked>
+            <label for="l4">User Requested Zones</label>
+        </div>
+        <div class="layer-row">
+            <input type="checkbox" id="l5" checked>
+            <label for="l5">Prohibited</label>
+        </div>
+    </div>
+
+    <div id="venue-label"></div>
+
+    <script>
+        const KML_FILES = [
+            '1y-UsoJRSg8aljpxW1E_tmy4xPTNoS_md',
+            '1O79aK9GDmpPkCh7vBoChYynia3Pnp_HC',
+            '15BUnuxCe3MNV5ABOWZE-gD-i0U12y-J-',
+            '1f38p5MvZLdfbXWuhpLjDZ_18w7TYYi2k',
+            '1AF29gSwD-B-T7VFZTg9KtzJKbTVNnnwr',
+            '11ZuP4LMhLRgbRqEL0bLmlzPpGl7GYr9_',
+            '124tbXj5xyPn9I8O8ivMX1t8_uUbtAJQ7',
+            '124OQzrUVmCPqGtjDG9vjkSncdJfRlYHw',
+            '12283TCmBvLFTqU1KMPrDgY9FeuHG_7bE'
+        ];
+
+        // Layers 1-5 have toggles; layers 0, 6, 7, 8 are always on
+        const TOGGLE_LAYER_INDICES = [1, 2, 3, 4, 5];
+
+        const p = new URLSearchParams(window.location.search);
+        const lat  = parseFloat(p.get('lat'))  || 54.5;
+        const lng  = parseFloat(p.get('lng'))  || -2.0;
+        const zoom = p.has('lat') ? 13 : 6;
+        const name = p.get('name') ? decodeURIComponent(p.get('name')) : null;
+
+        if (name) {
+            document.getElementById('venue-label').textContent = '📍 ' + name;
+            document.title = name + ' – Airspace Map';
+        } else {
+            document.getElementById('venue-label').style.display = 'none';
+        }
+
+        const rand = Date.now();
+        const kmlLayers = [];
+
+        function kmlUrl(fileId) {
+            return `https://docs.google.com/uc?id=${fileId}&export=kml&rand=${rand}`;
+        }
+
+        function initMap() {
+            const map = new google.maps.Map(document.getElementById('map'), {
+                center: { lat, lng },
+                zoom,
+                mapTypeId: 'roadmap',
+                disableDefaultUI: true,
+                zoomControl: true,
+                gestureHandling: 'greedy'
+            });
+
+            // Load all 9 KML layers
+            KML_FILES.forEach(function(fileId, i) {
+                const layer = new google.maps.KmlLayer({
+                    url: kmlUrl(fileId),
+                    map: map,
+                    preserveViewport: true,
+                    suppressInfoWindows: false
+                });
+                kmlLayers.push(layer);
+            });
+
+            // Venue marker
+            if (p.has('lat')) {
+                new google.maps.Marker({
+                    position: { lat, lng },
+                    map: map,
+                    title: name || 'Venue',
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 10,
+                        fillColor: '#3F8C66',
+                        fillOpacity: 1,
+                        strokeColor: '#ffffff',
+                        strokeWeight: 3
+                    }
+                });
+            }
+
+            // Wire up toggles for layers 1-5
+            TOGGLE_LAYER_INDICES.forEach(function(layerIndex, i) {
+                const checkbox = document.getElementById('l' + (i + 1));
+                checkbox.addEventListener('change', function() {
+                    kmlLayers[layerIndex].setMap(this.checked ? map : null);
+                });
+            });
+        }
+
+        window.initMap = initMap;
+    </script>
+    <script
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBB8DvyYEuj_r2hP5UCo9r1ielgPft9XhY&callback=initMap"
+        async defer
+    ></script>
+</body>
+</html>
