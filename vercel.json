@@ -1,14 +1,10 @@
 {
-  "version": 2,
-  "builds": [
-    { "src": "api/**/*.js", "use": "@vercel/node" },
-    { "src": "examples/**", "use": "@vercel/static" },
-    { "src": "dist/**", "use": "@vercel/static" }
-  ],
+  "buildCommand": "echo skip",
+  "outputDirectory": ".",
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
+      "src": "/api/airspace",
+      "dest": "/api/airspace.js"
     },
     {
       "src": "/",
@@ -21,34 +17,6 @@
     {
       "src": "/dist/(.*)",
       "dest": "/dist/$1"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        },
-        {
-          "key": "Access-Control-Allow-Methods",
-          "value": "GET, OPTIONS"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "public, s-maxage=3600"
-        }
-      ]
-    },
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=3600"
-        }
-      ]
     }
   ]
 }
