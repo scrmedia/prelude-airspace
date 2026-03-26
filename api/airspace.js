@@ -58,6 +58,8 @@ export default async function handler(req, res) {
             return res.status(502).json({ error: 'DJI API error', status: data.status, msg: data.extra?.msg });
         }
 
+        console.log('data.extra:', JSON.stringify(data.extra, null, 2));
+
         const zones = data.extra?.areas || [];
 
         console.log('Zone count:', zones.length);
