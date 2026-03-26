@@ -69,7 +69,7 @@ export default async function handler(req, res) {
     const zones = data.extra?.areas || [];
 
     // Single summary log — always the last line so it's visible in truncated Vercel output
-    console.log('RESULT | status:', data.status, '| extra keys:', data.extra ? Object.keys(data.extra) : 'null', '| zones:', zones.length, '| extra[0..200]:', JSON.stringify(data.extra)?.slice(0, 200));
+    console.log('RESULT | data keys:', Object.keys(data), '| status:', data.status, '| zones:', zones.length, '| full response[0..300]:', JSON.stringify(data).slice(0, 300));
 
     res.setHeader('Cache-Control', 'public, s-maxage=3600');
 
