@@ -53,7 +53,7 @@ export default async function handler(req, res) {
 
         const data = await response.json();
 
-        if (data.status && data.status !== 0) {
+        if (data.status !== 200) {
             console.error('DJI API error status:', data.status, 'msg:', data.extra?.msg);
             return res.status(502).json({ error: 'DJI API error', status: data.status, msg: data.extra?.msg });
         }
