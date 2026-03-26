@@ -4,31 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prelude Airspace Map</title>
-    
+
     <!-- OpenLayers CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v8.2.0/ol.css">
-    
-    <!-- ol-dji-geozones CSS -->
-    <link rel="stylesheet" href="../dist/ol-dji-geozones.css">
-    
+
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Rounded', 'Segoe UI', sans-serif;
-            background-color: #F7F5F2; /* Prelude Canvas */
+            background-color: #F7F5F2;
             overflow: hidden;
         }
-        
+
         #map {
             width: 100vw;
             height: 100vh;
         }
-        
+
         /* Loading overlay */
         #loading {
             position: absolute;
@@ -43,16 +40,16 @@
             z-index: 9999;
             transition: opacity 0.3s ease;
         }
-        
+
         #loading.hidden {
             opacity: 0;
             pointer-events: none;
         }
-        
+
         .loading-content {
             text-align: center;
         }
-        
+
         .spinner {
             width: 48px;
             height: 48px;
@@ -62,17 +59,23 @@
             animation: spin 1s linear infinite;
             margin: 0 auto 16px;
         }
-        
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-        
+
         .loading-text {
             font-size: 16px;
             color: #1A2140;
             font-weight: 600;
+            margin-bottom: 8px;
         }
-        
+
+        .loading-status {
+            font-size: 13px;
+            color: #7A7370;
+        }
+
         /* Prelude header */
         .prelude-header {
             position: absolute;
@@ -86,20 +89,40 @@
             z-index: 1000;
             max-width: calc(100vw - 32px);
         }
-        
+
         .prelude-header h1 {
             font-size: 18px;
             font-weight: 600;
             color: #1A2140;
             margin: 0 0 4px 0;
         }
-        
+
         .location-info {
             font-size: 13px;
             color: #7A7370;
             margin: 0;
         }
-        
+
+        .airspace-status {
+            font-size: 12px;
+            color: #C79D59;
+            margin: 6px 0 0 0;
+            padding: 4px 8px;
+            background: rgba(199, 157, 89, 0.1);
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .airspace-status.success {
+            color: #3F8C66;
+            background: rgba(63, 140, 102, 0.1);
+        }
+
+        .airspace-status.error {
+            color: #D94035;
+            background: rgba(217, 64, 53, 0.1);
+        }
+
         .open-maps-btn {
             margin-top: 10px;
             padding: 8px 14px;
@@ -113,15 +136,15 @@
             width: 100%;
             transition: background 0.2s ease;
         }
-        
+
         .open-maps-btn:hover {
             background: #357856;
         }
-        
+
         .open-maps-btn:active {
             transform: scale(0.98);
         }
-        
+
         /* Legend */
         .legend {
             position: absolute;
@@ -135,38 +158,38 @@
             z-index: 1000;
             max-width: 280px;
         }
-        
+
         .legend h3 {
             font-size: 14px;
             font-weight: 600;
             color: #1A2140;
             margin: 0 0 10px 0;
         }
-        
+
         .legend-item {
             display: flex;
             align-items: center;
             gap: 10px;
             margin-bottom: 8px;
         }
-        
+
         .legend-item:last-child {
             margin-bottom: 0;
         }
-        
+
         .legend-color {
             width: 20px;
             height: 20px;
             border-radius: 4px;
             flex-shrink: 0;
         }
-        
+
         .legend-text {
             font-size: 12px;
             color: #1F1C1A;
             line-height: 1.3;
         }
-        
+
         .legend-disclaimer {
             margin-top: 12px;
             padding-top: 12px;
@@ -175,7 +198,7 @@
             color: #7A7370;
             line-height: 1.4;
         }
-        
+
         /* Mobile optimization */
         @media (max-width: 768px) {
             .prelude-header {
@@ -184,52 +207,26 @@
                 right: 12px;
                 padding: 12px 14px;
             }
-            
+
             .prelude-header h1 {
                 font-size: 16px;
             }
-            
+
             .location-info {
                 font-size: 12px;
             }
-            
+
             .open-maps-btn {
                 font-size: 12px;
                 padding: 7px 12px;
             }
-            
+
             .legend {
                 bottom: 12px;
                 left: 12px;
                 right: 12px;
                 max-width: none;
             }
-        }
-        
-        /* Custom DJI zone colors (Prelude palette) */
-        .ol-dji-geozones-level-0 { 
-            fill: rgba(63, 140, 102, 0.15);
-            stroke: #3F8C66;
-        }
-        .ol-dji-geozones-level-1 { 
-            fill: rgba(199, 157, 89, 0.2);
-            stroke: #C79D59;
-        }
-        .ol-dji-geozones-level-2 { 
-            fill: rgba(199, 157, 89, 0.25);
-            stroke: #C79D59;
-        }
-        .ol-dji-geozones-level-3 { 
-            fill: rgba(199, 157, 89, 0.3);
-            stroke: #C79D59;
-        }
-        .ol-dji-geozones-level-4 { 
-            fill: rgba(217, 64, 53, 0.25);
-            stroke: #D94035;
-        }
-        .ol-dji-geozones-level-5 { 
-            fill: rgba(217, 64, 53, 0.35);
-            stroke: #D94035;
         }
     </style>
 </head>
@@ -238,19 +235,21 @@
     <div id="loading">
         <div class="loading-content">
             <div class="spinner"></div>
-            <p class="loading-text">Loading airspace data...</p>
+            <p class="loading-text">Loading map...</p>
+            <p class="loading-status" id="loading-status">Initializing...</p>
         </div>
     </div>
-    
+
     <!-- Prelude header -->
     <div class="prelude-header">
         <h1>🛩️ Airspace Map</h1>
         <p class="location-info" id="location-info">Loading location...</p>
+        <div class="airspace-status" id="airspace-status">Checking airspace data...</div>
         <button class="open-maps-btn" onclick="openGoogleMaps()">
             Open in Google Maps
         </button>
     </div>
-    
+
     <!-- Legend -->
     <div class="legend">
         <h3>Airspace Zones</h3>
@@ -270,30 +269,46 @@
             Data from DJI FlySafe. Always verify with local authorities before flying.
         </div>
     </div>
-    
+
     <!-- Map container -->
     <div id="map"></div>
-    
+
     <!-- OpenLayers -->
     <script src="https://cdn.jsdelivr.net/npm/ol@v8.2.0/dist/ol.js"></script>
-    
-    <!-- ol-dji-geozones -->
-    <script src="../dist/ol-dji-geozones.js"></script>
-    
+
     <script>
         // Parse URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         const lat = parseFloat(urlParams.get('lat')) || 51.5074;
         const lng = parseFloat(urlParams.get('lng')) || -0.1278;
-        
+
         // Update location info
-        document.getElementById('location-info').textContent = 
+        document.getElementById('location-info').textContent =
             `Venue: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-        
+
         console.log('🗺️ Initializing Prelude Airspace Map');
         console.log('📍 Venue location:', lat, lng);
-        
-        // Initialize OpenLayers map
+
+        function updateLoadingStatus(message) {
+            const statusEl = document.getElementById('loading-status');
+            if (statusEl) statusEl.textContent = message;
+        }
+
+        function updateAirspaceStatus(message, type) {
+            const statusEl = document.getElementById('airspace-status');
+            if (statusEl) {
+                statusEl.textContent = message;
+                statusEl.className = 'airspace-status ' + (type || '');
+            }
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.add('hidden');
+        }
+
+        // Initialize OpenLayers map immediately
+        updateLoadingStatus('Loading map...');
+
         const map = new ol.Map({
             target: 'map',
             layers: [
@@ -306,70 +321,126 @@
                 zoom: 13
             })
         });
-        
+
         // Add venue marker
         const venueMarker = new ol.Feature({
             geometry: new ol.geom.Point(ol.proj.fromLonLat([lng, lat]))
         });
-        
+
         const venueStyle = new ol.style.Style({
             image: new ol.style.Circle({
                 radius: 12,
                 fill: new ol.style.Fill({ color: '#3F8C66' }),
-                stroke: new ol.style.Stroke({ 
-                    color: 'white', 
-                    width: 3 
+                stroke: new ol.style.Stroke({
+                    color: 'white',
+                    width: 3
                 })
             }),
             zIndex: 999
         });
-        
+
         venueMarker.setStyle(venueStyle);
-        
+
         const vectorSource = new ol.source.Vector({
             features: [venueMarker]
         });
-        
+
         const vectorLayer = new ol.layer.Vector({
             source: vectorSource
         });
-        
+
         map.addLayer(vectorLayer);
-        
-        // Initialize DJI Geozones
-        const djiGeozones = new ol.control.DjiGeozones({
-            urlProxy: '/api/airspace?url=',
-            drone: 'spark',
-            zonesMode: 'total',
-            country: 'GB',
-            displayLevels: [5, 4, 3, 2, 1, 0],
-            activeLevels: [5, 4, 3, 2, 1, 0],
-            createPanel: false, // No control panel
-            startActive: true,
-            language: 'en'
-        });
-        
-        map.addControl(djiGeozones);
-        
-        // Hide loading when map is ready
+
+        // Hide loading when base map is ready
         map.once('rendercomplete', function() {
             console.log('✅ Map rendered');
-            setTimeout(() => {
-                document.getElementById('loading').classList.add('hidden');
-            }, 500);
+            setTimeout(hideLoading, 500);
         });
-        
-        // Fallback: hide loading after 5 seconds regardless
-        setTimeout(() => {
-            document.getElementById('loading').classList.add('hidden');
-        }, 5000);
-        
-        // Google Maps fallback
+
+        // Fallback: always hide loading after 3 seconds
+        setTimeout(hideLoading, 3000);
+
+        // Load DJI airspace zones asynchronously (non-blocking)
+        updateLoadingStatus('Loading airspace zones...');
+        updateAirspaceStatus('Fetching DJI data...');
+
+        async function loadDJIZones() {
+            try {
+                const djiUrl = `https://www-api.dji.com/api/geo/areas?lat=${lat}&lng=${lng}&search_radius=5000&data_source=0&drone_type=0`;
+                // Route through serverless proxy to avoid CORS
+                const proxyUrl = `/api/airspace?url=${encodeURIComponent(djiUrl)}`;
+
+                console.log('🛩️ Fetching DJI zones via proxy');
+
+                const response = await fetch(proxyUrl);
+
+                if (!response.ok) {
+                    throw new Error(`Proxy returned ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('📦 DJI response:', data);
+
+                if (data.areas && data.areas.length > 0) {
+                    renderDJIZones(data.areas);
+                    updateAirspaceStatus(`${data.areas.length} zone(s) loaded`, 'success');
+                } else {
+                    updateAirspaceStatus('No restrictions in area', 'success');
+                }
+
+            } catch (error) {
+                console.error('❌ Failed to load DJI zones:', error);
+                updateAirspaceStatus('Airspace data unavailable', 'error');
+            }
+        }
+
+        function renderDJIZones(zones) {
+            zones.forEach(function(zone) {
+                try {
+                    var center = ol.proj.fromLonLat([zone.lng, zone.lat]);
+                    var circle = new ol.geom.Circle(center, zone.radius);
+
+                    var fillColor, strokeColor;
+                    if (zone.level >= 4) {
+                        fillColor = 'rgba(217, 64, 53, 0.25)';
+                        strokeColor = '#D94035';
+                    } else if (zone.level >= 1) {
+                        fillColor = 'rgba(199, 157, 89, 0.2)';
+                        strokeColor = '#C79D59';
+                    } else {
+                        fillColor = 'rgba(63, 140, 102, 0.15)';
+                        strokeColor = '#3F8C66';
+                    }
+
+                    var feature = new ol.Feature({
+                        geometry: circle,
+                        name: zone.name,
+                        level: zone.level,
+                        radius: zone.radius
+                    });
+
+                    feature.setStyle(new ol.style.Style({
+                        fill: new ol.style.Fill({ color: fillColor }),
+                        stroke: new ol.style.Stroke({ color: strokeColor, width: 2 })
+                    }));
+
+                    vectorSource.addFeature(feature);
+                    console.log('✅ Rendered zone:', zone.name, '(Level ' + zone.level + ')');
+
+                } catch (err) {
+                    console.error('❌ Failed to render zone:', zone.name, err);
+                }
+            });
+        }
+
+        // Load DJI zones after a short delay so map renders first
+        setTimeout(loadDJIZones, 1000);
+
         function openGoogleMaps() {
-            const url = `https://www.google.com/maps?q=${lat},${lng}&z=14`;
+            var url = 'https://www.google.com/maps?q=' + lat + ',' + lng + '&z=14';
             window.open(url, '_blank');
         }
-        
+
         console.log('🚀 Prelude Airspace Map ready');
     </script>
 </body>
