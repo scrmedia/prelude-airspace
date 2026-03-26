@@ -1,11 +1,7 @@
 {
-  "version": 2,
   "buildCommand": "echo skip",
   "outputDirectory": ".",
   "routes": [
-    {
-      "src": "/",
-      "dest": "/examples/basic.html"
-    }
+    { "src": "/", "dest": "/index.html" }
   ]
 }
