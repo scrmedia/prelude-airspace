@@ -53,16 +53,19 @@ export default async function handler(req, res) {
 
         let zones = [];
 
-        if (data.areas && Array.isArray(data.areas)) {
-            zones = data.areas;
-        } else if (data.zones && Array.isArray(data.zones)) {
-            zones = data.zones;
-        } else if (data.data && Array.isArray(data.data)) {
-            zones = data.data;
-        } else if (Array.isArray(data)) {
-            zones = data;
+        // DJI API wraps response in { status, extra: { areas: [...] } }
+        const payload = data.extra || data;
+
+        if (payload.areas && Array.isArray(payload.areas)) {
+            zones = payload.areas;
+        } else if (payload.zones && Array.isArray(payload.zones)) {
+            zones = payload.zones;
+        } else if (payload.data && Array.isArray(payload.data)) {
+            zones = payload.data;
+        } else if (Array.isArray(payload)) {
+            zones = payload;
         } else {
-            console.log('Unknown response structure, keys:', Object.keys(data));
+            console.log('Unknown response structure. status:', data.status, 'extra keys:', data.extra ? Object.keys(data.extra) : 'none');
         }
 
         if (zones.length > 0) {
