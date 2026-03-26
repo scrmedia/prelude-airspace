@@ -4,12 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Airspace Map - Prelude</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v8.2.0/ol.css">
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -17,33 +16,27 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
 
         header {
             background: white;
-            padding: 16px 20px;
+            padding: 14px 20px;
             box-shadow: 0 2px 8px rgba(31, 24, 20, 0.08);
             z-index: 10;
+            flex-shrink: 0;
         }
 
         .header-content {
-            max-width: 1200px;
-            margin: 0 auto;
             display: flex;
             align-items: center;
             gap: 12px;
         }
 
-        .icon {
-            font-size: 28px;
-        }
-
-        .header-text {
-            flex: 1;
-        }
+        .header-text { flex: 1; }
 
         h1 {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 700;
             color: #1A2140;
             margin: 0;
@@ -51,199 +44,147 @@
 
         .venue-coords {
             color: #7A7370;
-            font-size: 14px;
+            font-size: 13px;
             margin-top: 2px;
         }
 
-        .powered-by {
-            color: #7A7370;
-            font-size: 13px;
-            text-align: right;
-        }
-
-        .powered-by a {
-            color: #3F8C66;
-            text-decoration: none;
-        }
-
-        .map-container {
+        /* Map fills the rest */
+        #map {
             flex: 1;
-            position: relative;
-            overflow: hidden;
-        }
-
-        iframe {
             width: 100%;
-            height: 100%;
-            border: none;
         }
 
-        .loading-overlay {
+        /* Action bar pinned above the map bottom */
+        .action-bar {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: #F7F5F2;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
             display: flex;
-            flex-direction: column;
-            align-items: center;
+            gap: 10px;
+            z-index: 100;
+            flex-wrap: wrap;
             justify-content: center;
-            z-index: 5;
-            transition: opacity 0.3s;
+            padding: 0 16px;
+            width: 100%;
+            max-width: 480px;
         }
 
-        .loading-overlay.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid #E0DEDA;
-            border-top-color: #1A2140;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .loading-text {
-            margin-top: 16px;
-            color: #7A7370;
-            font-size: 15px;
-        }
-
-        .fallback-container {
-            padding: 32px 20px;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .fallback-card {
-            background: white;
-            padding: 32px;
-            border-radius: 18px;
-            box-shadow: 0 2px 8px rgba(31, 24, 20, 0.08);
-            text-align: center;
-        }
-
-        .fallback-card h2 {
-            color: #1A2140;
-            font-size: 20px;
-            margin-bottom: 12px;
-        }
-
-        .fallback-card p {
-            color: #7A7370;
-            line-height: 1.5;
-            margin-bottom: 24px;
-        }
-
-        .button {
-            display: inline-block;
-            background: #3F8C66;
-            color: white;
-            padding: 14px 32px;
-            border-radius: 20px;
-            text-decoration: none;
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 13px 22px;
+            border-radius: 50px;
+            font-size: 14px;
             font-weight: 600;
-            font-size: 16px;
-            transition: opacity 0.2s;
-            margin: 8px;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(31, 24, 20, 0.18);
+            white-space: nowrap;
+            transition: transform 0.1s, opacity 0.1s;
         }
 
-        .button:hover { opacity: 0.9; }
+        .btn:active { transform: scale(0.97); opacity: 0.9; }
 
-        .button.secondary { background: #1A2140; }
+        .btn-primary {
+            background: #1A2140;
+            color: white;
+            flex: 1;
+        }
 
-        @media (max-width: 768px) {
-            header { padding: 12px 16px; }
-            h1 { font-size: 18px; }
-            .venue-coords { font-size: 13px; }
-            .powered-by { display: none; }
-            .button { display: block; margin: 8px 0; }
+        .btn-secondary {
+            background: white;
+            color: #1A2140;
+        }
+
+        /* Venue pin label */
+        .venue-label {
+            position: absolute;
+            background: white;
+            color: #1A2140;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(31,24,20,0.15);
+            white-space: nowrap;
+            pointer-events: none;
+            transform: translate(-50%, -150%);
+        }
+
+        @media (max-width: 480px) {
+            .btn { font-size: 13px; padding: 12px 18px; }
         }
     </style>
 </head>
 <body>
     <header>
         <div class="header-content">
-            <span class="icon">✈️</span>
             <div class="header-text">
-                <h1>Airspace Map</h1>
-                <div class="venue-coords" id="venue-display">Loading venue location...</div>
-            </div>
-            <div class="powered-by">
-                Powered by<br>
-                <a href="https://www.altitudeangel.com/solutions/dronesafetymap" target="_blank">Altitude Angel</a>
+                <h1>✈️ Airspace Map</h1>
+                <div class="venue-coords" id="venue-display">Loading...</div>
             </div>
         </div>
     </header>
 
-    <div class="map-container">
-        <div class="loading-overlay" id="loading">
-            <div class="spinner"></div>
-            <div class="loading-text">Loading airspace map...</div>
-        </div>
+    <div style="position: relative; flex: 1; display: flex; flex-direction: column;">
+        <div id="map"></div>
 
-        <iframe
-            id="map-frame"
-            src=""
-            allowfullscreen
-            loading="eager"
-        ></iframe>
+        <div class="action-bar">
+            <a id="btn-airspace" class="btn btn-primary" href="#" target="_blank">
+                🛩 Check Airspace Restrictions
+            </a>
+            <a id="btn-maps" class="btn btn-secondary" href="#" target="_blank">
+                📍 Google Maps
+            </a>
+        </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/ol@v8.2.0/dist/ol.js"></script>
     <script>
         const urlParams = new URLSearchParams(window.location.search);
-        const lat = parseFloat(urlParams.get('lat'));
-        const lng = parseFloat(urlParams.get('lng'));
+        const lat = parseFloat(urlParams.get('lat')) || 51.5074;
+        const lng = parseFloat(urlParams.get('lng')) || -0.1278;
 
-        if (isNaN(lat) || isNaN(lng)) {
-            showFallback('Missing Coordinates', 'Please provide valid latitude and longitude in the URL.');
-        } else {
-            document.getElementById('venue-display').textContent = `Venue: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+        document.getElementById('venue-display').textContent =
+            `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
 
-            const mapUrl = `https://dronesafetymap.com/#lat=${lat}&lng=${lng}&zoom=14`;
-            const iframe = document.getElementById('map-frame');
-            iframe.src = mapUrl;
+        document.getElementById('btn-airspace').href =
+            `https://dronesafetymap.com/#lat=${lat}&lng=${lng}&zoom=14`;
 
-            iframe.addEventListener('load', () => {
-                setTimeout(() => {
-                    document.getElementById('loading').classList.add('hidden');
-                }, 1000);
-            });
+        document.getElementById('btn-maps').href =
+            `https://www.google.com/maps?q=${lat},${lng}&z=15`;
 
-            // Fallback if iframe never fires load (some browsers block cross-origin events)
-            setTimeout(() => {
-                document.getElementById('loading').classList.add('hidden');
-            }, 8000);
-        }
+        const map = new ol.Map({
+            target: 'map',
+            layers: [
+                new ol.layer.Tile({ source: new ol.source.OSM() })
+            ],
+            view: new ol.View({
+                center: ol.proj.fromLonLat([lng, lat]),
+                zoom: 13
+            }),
+            controls: ol.control.defaults.defaults({ attribution: false, zoom: false, rotate: false })
+        });
 
-        function showFallback(title, message) {
-            const coordLinks = (!isNaN(lat) && !isNaN(lng)) ? `
-                <a href="https://dronesafetymap.com/" target="_blank" class="button">
-                    Open Drone Safety Map →
-                </a>
-                <a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" class="button secondary">
-                    Open in Google Maps →
-                </a>
-            ` : '';
+        // Venue marker
+        const marker = new ol.Feature({
+            geometry: new ol.geom.Point(ol.proj.fromLonLat([lng, lat]))
+        });
 
-            document.getElementById('loading').innerHTML = `
-                <div class="fallback-container">
-                    <div class="fallback-card">
-                        <h2>${title}</h2>
-                        <p>${message}</p>
-                        ${coordLinks}
-                    </div>
-                </div>
-            `;
-        }
+        marker.setStyle(new ol.style.Style({
+            image: new ol.style.Circle({
+                radius: 10,
+                fill: new ol.style.Fill({ color: '#3F8C66' }),
+                stroke: new ol.style.Stroke({ color: 'white', width: 3 })
+            })
+        }));
+
+        map.addLayer(new ol.layer.Vector({
+            source: new ol.source.Vector({ features: [marker] })
+        }));
     </script>
 </body>
 </html>
