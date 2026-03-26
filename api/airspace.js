@@ -30,52 +30,59 @@ export default async function handler(req, res) {
     // the level param (0%2C1%2C2...) which the DJI API does not accept
     const djiUrl = `https://www-api.dji.com/api/geo/areas?drone=${drone}&zones_mode=total&country=${country}&level=0,1,2,3,4,5,6,7,8,9&lat=${latitude}&lng=${longitude}&search_radius=10000`;
 
-    console.log('Calling DJI API:', djiUrl);
+    console.log('[1] Calling DJI API:', djiUrl);
 
+    let response;
     try {
-        const response = await fetch(djiUrl.toString(), {
+        response = await fetch(djiUrl, {
             headers: {
                 'Accept': 'application/json',
                 'User-Agent': 'Prelude-Airspace-Map/1.0'
             },
             signal: AbortSignal.timeout(10000)
         });
-
-        if (!response.ok) {
-            console.error('DJI API HTTP error:', response.status);
-            return res.status(502).json({ error: 'DJI API unavailable', status: response.status });
-        }
-
-        const data = await response.json();
-
-        if (Number(data.status) !== 200) {
-            console.error('DJI API error status:', data.status, 'msg:', data.extra?.msg);
-            return res.status(502).json({ error: 'DJI API error', status: data.status, msg: data.extra?.msg });
-        }
-
-        console.log('data.extra keys:', data.extra == null ? String(data.extra) : Object.keys(data.extra));
-        console.log('data.extra sample:', JSON.stringify(data.extra)?.slice(0, 500));
-
-        const zones = data.extra?.areas || [];
-
-        console.log('Zone count:', zones.length);
-        if (zones.length > 0) {
-            console.log('First zone:', JSON.stringify(zones[0], null, 2));
-        }
-
-        res.setHeader('Cache-Control', 'public, s-maxage=3600');
-
-        return res.status(200).json({
-            zones,
-            count: zones.length,
-            location: { lat: latitude, lng: longitude }
-        });
-
-    } catch (error) {
-        console.error('Error:', error.message);
-        if (error.name === 'TimeoutError' || error.name === 'AbortError') {
-            return res.status(504).json({ error: 'DJI API timed out' });
-        }
-        return res.status(500).json({ error: 'Failed to fetch airspace data', message: error.message });
+    } catch (fetchErr) {
+        console.error('[2] Fetch failed:', fetchErr.name, fetchErr.message);
+        const status = (fetchErr.name === 'TimeoutError' || fetchErr.name === 'AbortError') ? 504 : 502;
+        return res.status(status).json({ error: fetchErr.message });
     }
+
+    console.log('[3] DJI HTTP status:', response.status, response.statusText);
+
+    if (!response.ok) {
+        return res.status(502).json({ error: 'DJI API unavailable', status: response.status });
+    }
+
+    let data;
+    try {
+        data = await response.json();
+    } catch (parseErr) {
+        console.error('[4] JSON parse failed:', parseErr.message);
+        return res.status(502).json({ error: 'DJI response was not valid JSON' });
+    }
+
+    console.log('[5] data.status:', data.status, '| extra type:', typeof data.extra, '| extra keys:', data.extra ? Object.keys(data.extra) : 'null');
+
+    if (Number(data.status) !== 200) {
+        console.error('[6] DJI error status:', data.status, 'msg:', data.extra?.msg);
+        return res.status(502).json({ error: 'DJI API error', status: data.status, msg: data.extra?.msg });
+    }
+
+    console.log('[7] extra sample:', JSON.stringify(data.extra)?.slice(0, 300));
+
+    const zones = data.extra?.areas || [];
+
+    console.log('[8] Zone count:', zones.length);
+    if (zones.length > 0) {
+        console.log('[9] First zone keys:', Object.keys(zones[0]));
+        console.log('[9] First zone:', JSON.stringify(zones[0]));
+    }
+
+    res.setHeader('Cache-Control', 'public, s-maxage=3600');
+
+    return res.status(200).json({
+        zones,
+        count: zones.length,
+        location: { lat: latitude, lng: longitude }
+    });
 }
