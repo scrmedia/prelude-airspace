@@ -10,7 +10,7 @@
 
         #controls {
             position: absolute;
-            top: max(12px, env(safe-area-inset-top));
+            top: calc(max(12px, env(safe-area-inset-top)) + 54px);
             right: 12px;
             background: #1A2140;
             border-radius: 12px;
@@ -103,10 +103,12 @@
         #search-wrap {
             position: absolute;
             top: max(12px, env(safe-area-inset-top));
-            left: 50%;
-            transform: translateX(-50%);
+            left: 12px;
+            right: 12px;
+            transform: none;
             z-index: 10;
-            width: min(340px, calc(100vw - 240px));
+            width: auto;
+            max-width: 400px;
         }
 
         #search-input {
