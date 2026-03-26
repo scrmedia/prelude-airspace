@@ -366,38 +366,54 @@
 
         async function loadDJIZones() {
             try {
-                const apiUrl = `/api/airspace?lat=${lat}&lng=${lng}`;
+                const apiUrl = `${window.location.origin}/api/airspace?lat=${lat}&lng=${lng}`;
 
-                console.log('🛩️ Fetching zones via proxy:', apiUrl);
+                console.log('🛩️ Fetching zones from:', apiUrl);
 
                 const response = await fetch(apiUrl, {
+                    method: 'GET',
                     headers: { 'Accept': 'application/json' }
                 });
 
+                console.log('📡 Response status:', response.status, response.statusText);
+
                 if (!response.ok) {
-                    const errorData = await response.json().catch(function() { return {}; });
+                    let errorData;
+                    try { errorData = await response.json(); }
+                    catch (e) { errorData = { error: 'HTTP ' + response.status }; }
                     throw new Error(errorData.error || 'API returned ' + response.status);
                 }
 
                 const data = await response.json();
                 console.log('📦 API response:', data);
+                console.log('📍 Zone count:', data.count);
 
                 if (data.zones && data.zones.length > 0) {
+                    console.log('✅ Rendering', data.zones.length, 'zones');
                     renderDJIZones(data.zones);
                     updateAirspaceStatus(data.zones.length + ' zone(s) loaded', 'success');
                 } else {
+                    console.log('ℹ️ No zones found in this area');
                     updateAirspaceStatus('No restrictions in area', 'success');
                 }
 
             } catch (error) {
-                console.error('❌ Failed to load zones:', error);
+                console.error('❌ Failed to load zones:', error.message);
                 updateAirspaceStatus('Airspace data unavailable', 'error');
             }
         }
 
         function renderDJIZones(zones) {
-            zones.forEach(function(zone) {
+            console.log('🎨 Starting to render zones...');
+            var renderedCount = 0;
+
+            zones.forEach(function(zone, index) {
                 try {
+                    console.log('Zone ' + (index + 1) + ':', {
+                        name: zone.name, level: zone.level,
+                        lat: zone.lat, lng: zone.lng, radius: zone.radius
+                    });
+
                     var center = ol.proj.fromLonLat([zone.lng, zone.lat]);
                     var circle = new ol.geom.Circle(center, zone.radius);
 
@@ -426,12 +442,15 @@
                     }));
 
                     vectorSource.addFeature(feature);
-                    console.log('✅ Rendered zone:', zone.name, '(Level ' + zone.level + ')');
+                    renderedCount++;
+                    console.log('✅ Rendered zone ' + (index + 1) + ': ' + zone.name);
 
                 } catch (err) {
-                    console.error('❌ Failed to render zone:', zone.name, err);
+                    console.error('❌ Failed to render zone ' + (index + 1) + ':', zone.name, err);
                 }
             });
+
+            console.log('🎨 Finished rendering ' + renderedCount + '/' + zones.length + ' zones');
         }
 
         // Load DJI zones after a short delay so map renders first
