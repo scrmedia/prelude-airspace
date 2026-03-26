@@ -61,22 +61,15 @@ export default async function handler(req, res) {
         return res.status(502).json({ error: 'DJI response was not valid JSON' });
     }
 
-    console.log('[5] data.status:', data.status, '| extra type:', typeof data.extra, '| extra keys:', data.extra ? Object.keys(data.extra) : 'null');
-
     if (Number(data.status) !== 200) {
-        console.error('[6] DJI error status:', data.status, 'msg:', data.extra?.msg);
+        console.error('DJI error status:', data.status, 'msg:', data.extra?.msg);
         return res.status(502).json({ error: 'DJI API error', status: data.status, msg: data.extra?.msg });
     }
 
-    console.log('[7] extra sample:', JSON.stringify(data.extra)?.slice(0, 300));
-
     const zones = data.extra?.areas || [];
 
-    console.log('[8] Zone count:', zones.length);
-    if (zones.length > 0) {
-        console.log('[9] First zone keys:', Object.keys(zones[0]));
-        console.log('[9] First zone:', JSON.stringify(zones[0]));
-    }
+    // Single summary log — always the last line so it's visible in truncated Vercel output
+    console.log('RESULT | status:', data.status, '| extra keys:', data.extra ? Object.keys(data.extra) : 'null', '| zones:', zones.length, '| extra[0..200]:', JSON.stringify(data.extra)?.slice(0, 200));
 
     res.setHeader('Cache-Control', 'public, s-maxage=3600');
 
