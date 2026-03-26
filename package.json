@@ -1,0 +1,80 @@
+{
+  "name": "ol-dji-geozones",
+  "version": "2.3.0",
+  "description": "Displays DJI Geo Zones on an OpenLayers map.",
+  "main": "dist/ol-dji-geozones.js",
+  "module": "lib/ol-dji-geozones.js",
+  "types": "lib/ol-dji-geozones.d.ts",
+  "style": "lib/ol-dji-geozones.css",
+  "type": "module",
+  "files": [
+    "lib/**/*",
+    "dist/**/*"
+  ],
+  "scripts": {
+    "watch": "rollup -w --config rollup.config.dist.js --dev",
+    "doc": "documentation readme src/ol-dji-geozones.ts --shallow --quiet=true --access=public --access=undefined --section=API --parse-extension ts && node scripts/external-links.js README.md && prettier --write README.md",
+    "format": "eslint --fix src/*.ts && prettier --write src",
+    "lint": "eslint src/*.ts && prettier --check src",
+    "build": "npm run lint && rollup --config rollup.config.dist.js && rollup --config rollup.config.js"
+  },
+  "keywords": [
+    "ol",
+    "openlayers",
+    "dji",
+    "uav",
+    "vant",
+    "drone",
+    "geozone",
+    "geo zones",
+    "flyzafe",
+    "airports",
+    "aerodrome",
+    "airspace",
+    "mavic",
+    "phantom 4"
+  ],
+  "author": "Gastón Zalba",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GastonZalba/ol-dji-geozones.git"
+  },
+  "bugs": {
+    "url": "https://github.com/GastonZalba/ol-dji-geozones/issues"
+  },
+  "homepage": "https://github.com/GastonZalba/ol-dji-geozones#readme",
+  "peerDependencies": {
+    "ol": ">=5.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.21.4",
+    "@babel/preset-env": "^7.19.4",
+    "@rollup/plugin-commonjs": "^24.1.0",
+    "@rollup/plugin-image": "^3.0.2",
+    "@rollup/plugin-json": "^6.0.0",
+    "@rollup/plugin-node-resolve": "^15.0.2",
+    "@rollup/plugin-terser": "^0.4.1",
+    "@rollup/plugin-typescript": "^11.1.0",
+    "@typescript-eslint/eslint-plugin": "^6.7.3",
+    "@typescript-eslint/parser": "^6.7.3",
+    "autoprefixer": "^10.4.12",
+    "documentation": "^14.0.0",
+    "eslint": "^8.25.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-prettier": "^5.0.0",
+    "ol": "^9.2.4",
+    "postcss-preset-env": "^8.3.1",
+    "prettier": "^3.0.3",
+    "rollup": "^3.20.3",
+    "rollup-plugin-banner2": "^1.2.2",
+    "rollup-plugin-copy": "^3.4.0",
+    "rollup-plugin-delete": "^2.0.0",
+    "rollup-plugin-livereload": "^2.0.5",
+    "rollup-plugin-postcss": "^4.0.2",
+    "rollup-plugin-serve": "^2.0.2",
+    "sass": "^1.55.0",
+    "typescript": "^5.0.4"
+  }
+}
