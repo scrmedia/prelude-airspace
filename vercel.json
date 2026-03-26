@@ -1,14 +1,9 @@
 {
   "version": 2,
-  "builds": [
-    { "src": "api/airspace.js", "use": "@vercel/node" },
-    { "src": "examples/**", "use": "@vercel/static" },
-    { "src": "dist/**", "use": "@vercel/static" }
-  ],
   "routes": [
-    { "src": "/api/airspace", "dest": "/api/airspace.js" },
-    { "src": "/", "dest": "/examples/basic.html" },
-    { "src": "/examples/(.*)", "dest": "/examples/$1" },
-    { "src": "/dist/(.*)", "dest": "/dist/$1" }
+    {
+      "src": "/",
+      "dest": "/examples/basic.html"
+    }
   ]
 }

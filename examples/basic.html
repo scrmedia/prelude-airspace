@@ -3,11 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prelude Airspace Map</title>
-
-    <!-- OpenLayers CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v8.2.0/ol.css">
-
+    <title>Airspace Map - Prelude</title>
     <style>
         * {
             margin: 0;
@@ -16,48 +12,99 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Rounded', 'Segoe UI', sans-serif;
-            background-color: #F7F5F2;
+            font-family: 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #F7F5F2;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: white;
+            padding: 16px 20px;
+            box-shadow: 0 2px 8px rgba(31, 24, 20, 0.08);
+            z-index: 10;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .icon {
+            font-size: 28px;
+        }
+
+        .header-text {
+            flex: 1;
+        }
+
+        h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1A2140;
+            margin: 0;
+        }
+
+        .venue-coords {
+            color: #7A7370;
+            font-size: 14px;
+            margin-top: 2px;
+        }
+
+        .powered-by {
+            color: #7A7370;
+            font-size: 13px;
+            text-align: right;
+        }
+
+        .powered-by a {
+            color: #3F8C66;
+            text-decoration: none;
+        }
+
+        .map-container {
+            flex: 1;
+            position: relative;
             overflow: hidden;
         }
 
-        #map {
-            width: 100vw;
-            height: 100vh;
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
         }
 
-        /* Loading overlay */
-        #loading {
+        .loading-overlay {
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(247, 245, 242, 0.98);
+            right: 0;
+            bottom: 0;
+            background: #F7F5F2;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 9999;
-            transition: opacity 0.3s ease;
+            z-index: 5;
+            transition: opacity 0.3s;
         }
 
-        #loading.hidden {
+        .loading-overlay.hidden {
             opacity: 0;
             pointer-events: none;
         }
 
-        .loading-content {
-            text-align: center;
-        }
-
         .spinner {
-            width: 48px;
-            height: 48px;
-            border: 4px solid #E0DEDA;
-            border-top-color: #3F8C66;
+            width: 40px;
+            height: 40px;
+            border: 3px solid #E0DEDA;
+            border-top-color: #1A2140;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 0 auto 16px;
         }
 
         @keyframes spin {
@@ -65,403 +112,138 @@
         }
 
         .loading-text {
-            font-size: 16px;
-            color: #1A2140;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .loading-status {
-            font-size: 13px;
+            margin-top: 16px;
             color: #7A7370;
+            font-size: 15px;
         }
 
-        /* Prelude header */
-        .prelude-header {
-            position: absolute;
-            top: 16px;
-            left: 16px;
-            background: rgba(254, 252, 250, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 14px 18px;
-            border-radius: 14px;
-            box-shadow: 0 4px 12px rgba(31, 24, 20, 0.12);
-            z-index: 1000;
-            max-width: calc(100vw - 32px);
+        .fallback-container {
+            padding: 32px 20px;
+            max-width: 600px;
+            margin: 0 auto;
         }
 
-        .prelude-header h1 {
-            font-size: 18px;
-            font-weight: 600;
+        .fallback-card {
+            background: white;
+            padding: 32px;
+            border-radius: 18px;
+            box-shadow: 0 2px 8px rgba(31, 24, 20, 0.08);
+            text-align: center;
+        }
+
+        .fallback-card h2 {
             color: #1A2140;
-            margin: 0 0 4px 0;
+            font-size: 20px;
+            margin-bottom: 12px;
         }
 
-        .location-info {
-            font-size: 13px;
+        .fallback-card p {
             color: #7A7370;
-            margin: 0;
+            line-height: 1.5;
+            margin-bottom: 24px;
         }
 
-        .airspace-status {
-            font-size: 12px;
-            color: #C79D59;
-            margin: 6px 0 0 0;
-            padding: 4px 8px;
-            background: rgba(199, 157, 89, 0.1);
-            border-radius: 6px;
+        .button {
             display: inline-block;
-        }
-
-        .airspace-status.success {
-            color: #3F8C66;
-            background: rgba(63, 140, 102, 0.1);
-        }
-
-        .airspace-status.error {
-            color: #D94035;
-            background: rgba(217, 64, 53, 0.1);
-        }
-
-        .open-maps-btn {
-            margin-top: 10px;
-            padding: 8px 14px;
             background: #3F8C66;
             color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 13px;
+            padding: 14px 32px;
+            border-radius: 20px;
+            text-decoration: none;
             font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            transition: background 0.2s ease;
+            font-size: 16px;
+            transition: opacity 0.2s;
+            margin: 8px;
         }
 
-        .open-maps-btn:hover {
-            background: #357856;
-        }
+        .button:hover { opacity: 0.9; }
 
-        .open-maps-btn:active {
-            transform: scale(0.98);
-        }
+        .button.secondary { background: #1A2140; }
 
-        /* Legend */
-        .legend {
-            position: absolute;
-            bottom: 20px;
-            left: 16px;
-            background: rgba(254, 252, 250, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 14px;
-            border-radius: 14px;
-            box-shadow: 0 4px 12px rgba(31, 24, 20, 0.12);
-            z-index: 1000;
-            max-width: 280px;
-        }
-
-        .legend h3 {
-            font-size: 14px;
-            font-weight: 600;
-            color: #1A2140;
-            margin: 0 0 10px 0;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 8px;
-        }
-
-        .legend-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .legend-color {
-            width: 20px;
-            height: 20px;
-            border-radius: 4px;
-            flex-shrink: 0;
-        }
-
-        .legend-text {
-            font-size: 12px;
-            color: #1F1C1A;
-            line-height: 1.3;
-        }
-
-        .legend-disclaimer {
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid #E0DEDA;
-            font-size: 10px;
-            color: #7A7370;
-            line-height: 1.4;
-        }
-
-        /* Mobile optimization */
         @media (max-width: 768px) {
-            .prelude-header {
-                top: 12px;
-                left: 12px;
-                right: 12px;
-                padding: 12px 14px;
-            }
-
-            .prelude-header h1 {
-                font-size: 16px;
-            }
-
-            .location-info {
-                font-size: 12px;
-            }
-
-            .open-maps-btn {
-                font-size: 12px;
-                padding: 7px 12px;
-            }
-
-            .legend {
-                bottom: 12px;
-                left: 12px;
-                right: 12px;
-                max-width: none;
-            }
+            header { padding: 12px 16px; }
+            h1 { font-size: 18px; }
+            .venue-coords { font-size: 13px; }
+            .powered-by { display: none; }
+            .button { display: block; margin: 8px 0; }
         }
     </style>
 </head>
 <body>
-    <!-- Loading overlay -->
-    <div id="loading">
-        <div class="loading-content">
+    <header>
+        <div class="header-content">
+            <span class="icon">✈️</span>
+            <div class="header-text">
+                <h1>Airspace Map</h1>
+                <div class="venue-coords" id="venue-display">Loading venue location...</div>
+            </div>
+            <div class="powered-by">
+                Powered by<br>
+                <a href="https://www.altitudeangel.com/solutions/dronesafetymap" target="_blank">Altitude Angel</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="map-container">
+        <div class="loading-overlay" id="loading">
             <div class="spinner"></div>
-            <p class="loading-text">Loading map...</p>
-            <p class="loading-status" id="loading-status">Initializing...</p>
+            <div class="loading-text">Loading airspace map...</div>
         </div>
+
+        <iframe
+            id="map-frame"
+            src=""
+            allowfullscreen
+            loading="eager"
+        ></iframe>
     </div>
-
-    <!-- Prelude header -->
-    <div class="prelude-header">
-        <h1>🛩️ Airspace Map</h1>
-        <p class="location-info" id="location-info">Loading location...</p>
-        <div class="airspace-status" id="airspace-status">Checking airspace data...</div>
-        <button class="open-maps-btn" onclick="openGoogleMaps()">
-            Open in Google Maps
-        </button>
-    </div>
-
-    <!-- Legend -->
-    <div class="legend">
-        <h3>Airspace Zones</h3>
-        <div class="legend-item">
-            <div class="legend-color" style="background: #D94035;"></div>
-            <div class="legend-text">Prohibited<br><span style="opacity: 0.7;">No-fly zone</span></div>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color" style="background: #C79D59;"></div>
-            <div class="legend-text">Restricted<br><span style="opacity: 0.7;">Authorization required</span></div>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color" style="background: #3F8C66;"></div>
-            <div class="legend-text">Clear<br><span style="opacity: 0.7;">Caution advised</span></div>
-        </div>
-        <div class="legend-disclaimer">
-            Data from DJI FlySafe. Always verify with local authorities before flying.
-        </div>
-    </div>
-
-    <!-- Map container -->
-    <div id="map"></div>
-
-    <!-- OpenLayers -->
-    <script src="https://cdn.jsdelivr.net/npm/ol@v8.2.0/dist/ol.js"></script>
 
     <script>
-        // Parse URL parameters
         const urlParams = new URLSearchParams(window.location.search);
-        const lat = parseFloat(urlParams.get('lat')) || 51.5074;
-        const lng = parseFloat(urlParams.get('lng')) || -0.1278;
+        const lat = parseFloat(urlParams.get('lat'));
+        const lng = parseFloat(urlParams.get('lng'));
 
-        // Update location info
-        document.getElementById('location-info').textContent =
-            `Venue: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+        if (isNaN(lat) || isNaN(lng)) {
+            showFallback('Missing Coordinates', 'Please provide valid latitude and longitude in the URL.');
+        } else {
+            document.getElementById('venue-display').textContent = `Venue: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
 
-        console.log('🗺️ Initializing Prelude Airspace Map');
-        console.log('📍 Venue location:', lat, lng);
+            const mapUrl = `https://dronesafetymap.com/#lat=${lat}&lng=${lng}&zoom=14`;
+            const iframe = document.getElementById('map-frame');
+            iframe.src = mapUrl;
 
-        function updateLoadingStatus(message) {
-            const statusEl = document.getElementById('loading-status');
-            if (statusEl) statusEl.textContent = message;
-        }
-
-        function updateAirspaceStatus(message, type) {
-            const statusEl = document.getElementById('airspace-status');
-            if (statusEl) {
-                statusEl.textContent = message;
-                statusEl.className = 'airspace-status ' + (type || '');
-            }
-        }
-
-        function hideLoading() {
-            document.getElementById('loading').classList.add('hidden');
-        }
-
-        // Initialize OpenLayers map immediately
-        updateLoadingStatus('Loading map...');
-
-        const map = new ol.Map({
-            target: 'map',
-            layers: [
-                new ol.layer.Tile({
-                    source: new ol.source.OSM()
-                })
-            ],
-            view: new ol.View({
-                center: ol.proj.fromLonLat([lng, lat]),
-                zoom: 13
-            })
-        });
-
-        // Add venue marker
-        const venueMarker = new ol.Feature({
-            geometry: new ol.geom.Point(ol.proj.fromLonLat([lng, lat]))
-        });
-
-        const venueStyle = new ol.style.Style({
-            image: new ol.style.Circle({
-                radius: 12,
-                fill: new ol.style.Fill({ color: '#3F8C66' }),
-                stroke: new ol.style.Stroke({
-                    color: 'white',
-                    width: 3
-                })
-            }),
-            zIndex: 999
-        });
-
-        venueMarker.setStyle(venueStyle);
-
-        const vectorSource = new ol.source.Vector({
-            features: [venueMarker]
-        });
-
-        const vectorLayer = new ol.layer.Vector({
-            source: vectorSource
-        });
-
-        map.addLayer(vectorLayer);
-
-        // Hide loading when base map is ready
-        map.once('rendercomplete', function() {
-            console.log('✅ Map rendered');
-            setTimeout(hideLoading, 500);
-        });
-
-        // Fallback: always hide loading after 3 seconds
-        setTimeout(hideLoading, 3000);
-
-        // Load DJI airspace zones asynchronously (non-blocking)
-        updateLoadingStatus('Loading airspace zones...');
-        updateAirspaceStatus('Fetching DJI data...');
-
-        async function loadDJIZones() {
-            try {
-                const apiUrl = `${window.location.origin}/api/airspace?lat=${lat}&lng=${lng}`;
-
-                console.log('🛩️ Fetching zones from:', apiUrl);
-
-                const response = await fetch(apiUrl, {
-                    method: 'GET',
-                    headers: { 'Accept': 'application/json' }
-                });
-
-                console.log('📡 Response status:', response.status, response.statusText);
-
-                if (!response.ok) {
-                    let errorData;
-                    try { errorData = await response.json(); }
-                    catch (e) { errorData = { error: 'HTTP ' + response.status }; }
-                    throw new Error(errorData.error || 'API returned ' + response.status);
-                }
-
-                const data = await response.json();
-                console.log('📦 API response:', data);
-                console.log('📍 Zone count:', data.count);
-
-                if (data.zones && data.zones.length > 0) {
-                    console.log('✅ Rendering', data.zones.length, 'zones');
-                    renderDJIZones(data.zones);
-                    updateAirspaceStatus(data.zones.length + ' zone(s) loaded', 'success');
-                } else {
-                    console.log('ℹ️ No zones found in this area');
-                    updateAirspaceStatus('No restrictions in area', 'success');
-                }
-
-            } catch (error) {
-                console.error('❌ Failed to load zones:', error.message);
-                updateAirspaceStatus('Airspace data unavailable', 'error');
-            }
-        }
-
-        function renderDJIZones(zones) {
-            console.log('🎨 Starting to render zones...');
-            var renderedCount = 0;
-
-            zones.forEach(function(zone, index) {
-                try {
-                    console.log('Zone ' + (index + 1) + ':', {
-                        name: zone.name, level: zone.level,
-                        lat: zone.lat, lng: zone.lng, radius: zone.radius
-                    });
-
-                    var center = ol.proj.fromLonLat([zone.lng, zone.lat]);
-                    var circle = new ol.geom.Circle(center, zone.radius);
-
-                    var fillColor, strokeColor;
-                    if (zone.level >= 4) {
-                        fillColor = 'rgba(217, 64, 53, 0.25)';
-                        strokeColor = '#D94035';
-                    } else if (zone.level >= 1) {
-                        fillColor = 'rgba(199, 157, 89, 0.2)';
-                        strokeColor = '#C79D59';
-                    } else {
-                        fillColor = 'rgba(63, 140, 102, 0.15)';
-                        strokeColor = '#3F8C66';
-                    }
-
-                    var feature = new ol.Feature({
-                        geometry: circle,
-                        name: zone.name,
-                        level: zone.level,
-                        radius: zone.radius
-                    });
-
-                    feature.setStyle(new ol.style.Style({
-                        fill: new ol.style.Fill({ color: fillColor }),
-                        stroke: new ol.style.Stroke({ color: strokeColor, width: 2 })
-                    }));
-
-                    vectorSource.addFeature(feature);
-                    renderedCount++;
-                    console.log('✅ Rendered zone ' + (index + 1) + ': ' + zone.name);
-
-                } catch (err) {
-                    console.error('❌ Failed to render zone ' + (index + 1) + ':', zone.name, err);
-                }
+            iframe.addEventListener('load', () => {
+                setTimeout(() => {
+                    document.getElementById('loading').classList.add('hidden');
+                }, 1000);
             });
 
-            console.log('🎨 Finished rendering ' + renderedCount + '/' + zones.length + ' zones');
+            // Fallback if iframe never fires load (some browsers block cross-origin events)
+            setTimeout(() => {
+                document.getElementById('loading').classList.add('hidden');
+            }, 8000);
         }
 
-        // Load DJI zones after a short delay so map renders first
-        setTimeout(loadDJIZones, 1000);
+        function showFallback(title, message) {
+            const coordLinks = (!isNaN(lat) && !isNaN(lng)) ? `
+                <a href="https://dronesafetymap.com/" target="_blank" class="button">
+                    Open Drone Safety Map →
+                </a>
+                <a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" class="button secondary">
+                    Open in Google Maps →
+                </a>
+            ` : '';
 
-        function openGoogleMaps() {
-            var url = 'https://www.google.com/maps?q=' + lat + ',' + lng + '&z=14';
-            window.open(url, '_blank');
+            document.getElementById('loading').innerHTML = `
+                <div class="fallback-container">
+                    <div class="fallback-card">
+                        <h2>${title}</h2>
+                        <p>${message}</p>
+                        ${coordLinks}
+                    </div>
+                </div>
+            `;
         }
-
-        console.log('🚀 Prelude Airspace Map ready');
     </script>
 </body>
 </html>
