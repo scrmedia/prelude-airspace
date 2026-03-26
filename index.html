@@ -99,6 +99,60 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
+        #search-wrap {
+            position: absolute;
+            top: max(12px, env(safe-area-inset-top));
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            width: min(340px, calc(100vw - 240px));
+        }
+
+        #search-input {
+            width: 100%;
+            padding: 10px 16px 10px 36px;
+            border: none;
+            border-radius: 20px;
+            background: #1A2140;
+            color: white;
+            font-family: system-ui, -apple-system, sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+            outline: none;
+        }
+
+        #search-input::placeholder { color: rgba(255,255,255,0.45); }
+
+        #search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+            pointer-events: none;
+        }
+
+        /* Style the Places autocomplete dropdown to match */
+        .pac-container {
+            border-radius: 12px;
+            margin-top: 6px;
+            border: none;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+            font-family: system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+        }
+
+        .pac-item {
+            padding: 8px 14px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .pac-item:hover { background: #f0f0f0; }
+        .pac-item-selected { background: #e8f4ee; }
+        .pac-matched { font-weight: 600; color: #1A2140; }
     </style>
 </head>
 <body>
@@ -129,6 +183,16 @@
     </div>
 
     <div id="venue-label"></div>
+
+    <div id="search-wrap">
+        <span id="search-icon">🔍</span>
+        <input
+            id="search-input"
+            type="text"
+            placeholder="Search for a location…"
+            autocomplete="off"
+        >
+    </div>
 
     <script>
         const KML_FILES = [
@@ -211,12 +275,45 @@
                     kmlLayers[layerIndex].setMap(this.checked ? map : null);
                 });
             });
+
+            // Search box with Places Autocomplete (biased to UK)
+            var searchInput = document.getElementById('search-input');
+            var autocomplete = new google.maps.places.Autocomplete(searchInput, {
+                componentRestrictions: { country: 'gb' },
+                fields: ['geometry', 'name']
+            });
+
+            var searchMarker = new google.maps.Marker({
+                map: null,
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 9,
+                    fillColor: '#ffffff',
+                    fillOpacity: 1,
+                    strokeColor: '#1A2140',
+                    strokeWeight: 3
+                }
+            });
+
+            autocomplete.addListener('place_changed', function() {
+                var place = autocomplete.getPlace();
+                if (!place.geometry || !place.geometry.location) return;
+
+                map.panTo(place.geometry.location);
+                map.setZoom(13);
+
+                searchMarker.setPosition(place.geometry.location);
+                searchMarker.setTitle(place.name);
+                searchMarker.setMap(map);
+
+                searchInput.blur();
+            });
         }
 
         window.initMap = initMap;
     </script>
     <script
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBB8DvyYEuj_r2hP5UCo9r1ielgPft9XhY&callback=initMap"
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBB8DvyYEuj_r2hP5UCo9r1ielgPft9XhY&libraries=places&callback=initMap"
         async defer
     ></script>
 </body>
