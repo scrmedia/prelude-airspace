@@ -7,6 +7,10 @@
   ],
   "routes": [
     {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
       "src": "/",
       "dest": "/examples/basic.html"
     },
@@ -21,12 +25,25 @@
   ],
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/api/(.*)",
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
           "value": "*"
         },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, OPTIONS"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, s-maxage=3600"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
         {
           "key": "Cache-Control",
           "value": "public, max-age=3600"

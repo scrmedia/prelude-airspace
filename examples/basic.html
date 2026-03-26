@@ -366,30 +366,31 @@
 
         async function loadDJIZones() {
             try {
-                const djiUrl = `https://www-api.dji.com/api/geo/areas?lat=${lat}&lng=${lng}&search_radius=5000&data_source=0&drone_type=0`;
-                // Route through serverless proxy to avoid CORS
-                const proxyUrl = `/api/airspace?url=${encodeURIComponent(djiUrl)}`;
+                const apiUrl = `/api/airspace?lat=${lat}&lng=${lng}`;
 
-                console.log('🛩️ Fetching DJI zones via proxy');
+                console.log('🛩️ Fetching zones via proxy:', apiUrl);
 
-                const response = await fetch(proxyUrl);
+                const response = await fetch(apiUrl, {
+                    headers: { 'Accept': 'application/json' }
+                });
 
                 if (!response.ok) {
-                    throw new Error(`Proxy returned ${response.status}`);
+                    const errorData = await response.json().catch(function() { return {}; });
+                    throw new Error(errorData.error || 'API returned ' + response.status);
                 }
 
                 const data = await response.json();
-                console.log('📦 DJI response:', data);
+                console.log('📦 API response:', data);
 
-                if (data.areas && data.areas.length > 0) {
-                    renderDJIZones(data.areas);
-                    updateAirspaceStatus(`${data.areas.length} zone(s) loaded`, 'success');
+                if (data.zones && data.zones.length > 0) {
+                    renderDJIZones(data.zones);
+                    updateAirspaceStatus(data.zones.length + ' zone(s) loaded', 'success');
                 } else {
                     updateAirspaceStatus('No restrictions in area', 'success');
                 }
 
             } catch (error) {
-                console.error('❌ Failed to load DJI zones:', error);
+                console.error('❌ Failed to load zones:', error);
                 updateAirspaceStatus('Airspace data unavailable', 'error');
             }
         }
