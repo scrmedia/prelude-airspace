@@ -26,16 +26,11 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Invalid coordinates' });
     }
 
-    const djiUrl = new URL('https://www-api.dji.com/api/geo/areas');
-    djiUrl.searchParams.set('drone', drone);
-    djiUrl.searchParams.set('zones_mode', 'total');
-    djiUrl.searchParams.set('country', country);
-    djiUrl.searchParams.set('level', '0,1,2,3,4,5,6,7,8,9');
-    djiUrl.searchParams.set('lat', latitude);
-    djiUrl.searchParams.set('lng', longitude);
-    djiUrl.searchParams.set('search_radius', '10000');
+    // Build URL via string concatenation - URLSearchParams encodes commas in
+    // the level param (0%2C1%2C2...) which the DJI API does not accept
+    const djiUrl = `https://www-api.dji.com/api/geo/areas?drone=${drone}&zones_mode=total&country=${country}&level=0,1,2,3,4,5,6,7,8,9&lat=${latitude}&lng=${longitude}&search_radius=10000`;
 
-    console.log('Calling DJI API:', djiUrl.toString());
+    console.log('Calling DJI API:', djiUrl);
 
     try {
         const response = await fetch(djiUrl.toString(), {
@@ -58,7 +53,8 @@ export default async function handler(req, res) {
             return res.status(502).json({ error: 'DJI API error', status: data.status, msg: data.extra?.msg });
         }
 
-        console.log('data.extra:', JSON.stringify(data.extra, null, 2));
+        console.log('data.extra keys:', data.extra == null ? String(data.extra) : Object.keys(data.extra));
+        console.log('data.extra sample:', JSON.stringify(data.extra)?.slice(0, 500));
 
         const zones = data.extra?.areas || [];
 
